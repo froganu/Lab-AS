@@ -46,6 +46,11 @@ This platform enables users to share visual content and participate in discussio
 - No plaintext password storage
 
 **Data Protection**
-- Injection attack prevention through parameterized queries
+- SQLi detection and prevention using sanitized inputs
 - Environment variables for credential management
 - Strict access controls on sensitive data
+
+**SSTI and XSS Prevention**
+- Input sanitization and validation on all user-generated content
+- Context-aware output encoding to prevent script injection
+- Content Security Policy headers to restrict executable content sources

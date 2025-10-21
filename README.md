@@ -1,5 +1,8 @@
 # Forum Platform for Application Security subject
 
+![Banner](upc-logo.png)
+
+
 A web-based image sharing and discussion platform built with React and Node.js, designed for users to post images with metadata and engage in conversations through comments.
 
 ## Overview

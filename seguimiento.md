@@ -185,12 +185,3 @@ mysql -h localhost -P 3307 -uforum_user -p1234 forum_db
   ```bash
   docker compose down -v && docker compose up --build
   ```
-- Cada compañero puede conectarse a su propia base de datos con herramientas como **DBeaver** o **MySQL Workbench** usando:
-  ```
-  Host: localhost
-  Port: 3307
-  User: forum_user
-  Password: 1234
-  Database: forum_db
-  ```
-

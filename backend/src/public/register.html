@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registro - Foro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Evitar cacheo para que la redirección por sesión sea fiable -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <link rel="stylesheet" href="/style.css" />
+
+  <!-- Si ya hay sesión, no tiene sentido mostrar registro -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('user')) {
+          location.replace('/forum.html');
+        }
+      } catch (_) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>Crear cuenta</h2>
+
+    <form id="registerForm" autocomplete="off">
+      <input name="username" id="username" placeholder="Usuario" minlength="3" required />
+      <input name="email" id="email" type="email" placeholder="Correo" required />
+      <input name="password" id="password" type="password" placeholder="Contraseña" minlength="5" required />
+      <button type="submit">Registrarme</button>
+      <p id="msg" class="msg"></p>
+    </form>
+
+    <p>¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a></p>
+  </div>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const msg = document.getElementById('msg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+
+      const payload = {
+        username: document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.textContent = data.message || 'Error al registrar usuario';
+          msg.classList.add('error');
+          return;
+        }
+
+        // Registro ok → ir al login
+        alert('Usuario registrado con éxito');
+        location.replace('/login.html');
+      } catch (err) {
+        msg.textContent = 'No se pudo conectar con el servidor';
+        msg.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>
+

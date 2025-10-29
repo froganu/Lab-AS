@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Foro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/style.css" />
+  <script>
+    (function () {
+      try {
+        const user = localStorage.getItem('user');
+        if (!user) return location.replace('/login.html');
+        window.currentUser = JSON.parse(user);
+      } catch {
+        location.replace('/login.html');
+      }
+    })();
+    function logout() {
+      localStorage.removeItem('user');
+      location.replace('/login.html');
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>Bienvenido al foro 🧩</h2>
+    <p id="welcome"></p>
+    <button onclick="logout()">Cerrar sesión</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('welcome');
+      if (window.currentUser && el) el.textContent = `Has iniciado sesión como ${window.currentUser.username}`;
+    });
+  </script>
+</body>
+</html>
+

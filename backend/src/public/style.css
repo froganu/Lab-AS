@@ -1,0 +1,11 @@
+body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; }
+.container { max-width:360px; margin:80px auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,.08); }
+h2 { margin-top:0; }
+input { width:100%; padding:10px; margin:.4rem 0; border:1px solid #ddd; border-radius:8px; }
+button { width:100%; padding:10px; margin-top:.6rem; background:#0069ff; color:#fff; border:none; border-radius:8px; cursor:pointer; }
+button:hover { background:#0053cc; }
+.msg { margin-top:.5rem; font-size:.9rem; color:#444; }
+.msg.error { color:#c62828; }
+a { color:#0069ff; text-decoration:none; }
+a:hover { text-decoration:underline; }
+

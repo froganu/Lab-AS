@@ -39,14 +39,14 @@ export const loginUser = async (req, res) => {
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(401).json({ message: 'Contraseña incorrecta' });
+      return res.status(401).json({ message: 'Credencials Incorrectes' });
     }
 
     // Por ahora, no generamos JWT ni Auth0, solo devolvemos confirmación.
     res.json({ message: 'Login exitoso', user: { id: user.id, username: user.username, role: user.role } });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al iniciar sesión' });
+    res.status(500).json({ message: 'Error a l\'iniciar sessió' });
   }
 };
 

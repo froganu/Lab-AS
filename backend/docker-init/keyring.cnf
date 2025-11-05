@@ -1,0 +1,3 @@
+[mysqld]
+early-plugin-load=keyring_file.so
+keyring_file_data=/usr/local/mysql/mysql-keyring/keyring

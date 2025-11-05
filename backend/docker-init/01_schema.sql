@@ -31,3 +31,7 @@ CREATE TABLE IF NOT EXISTS comments (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Encriptar las tablas
+ALTER TABLE users ENCRYPTION='Y';
+ALTER TABLE posts ENCRYPTION='Y';
+ALTER TABLE comments ENCRYPTION='Y';

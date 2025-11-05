@@ -1,0 +1,12 @@
+FROM mysql:8.0
+
+# Copia la configuracion del keyring
+COPY docker-init/keyring.cnf /etc/mysql/conf.d/
+
+# Copia el schema SQL
+COPY docker-init/01_schema.sql /docker-entrypoint-initdb.d/
+
+# Crea una carpeta de keyring con permisos
+RUN mkdir -p /usr/local/mysql/mysql-keyring && \
+    chmod 750 /usr/local/mysql/mysql-keyring && \
+    chown mysql:mysql /usr/local/mysql/mysql-keyring

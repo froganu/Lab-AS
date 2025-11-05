@@ -1,6 +1,8 @@
 services:
   db:
-    image: mysql:8.0
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
     container_name: forum-db
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -11,7 +13,7 @@ services:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
-      - ./docker-init:/docker-entrypoint-initdb.d:ro
+      - keyring_data:/usr/local/mysql/mysql-keyring
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
@@ -41,4 +43,4 @@ services:
 # este bloque DEBE estar al final del archivo:
 volumes:
   db_data:
-
+  keyring_data:

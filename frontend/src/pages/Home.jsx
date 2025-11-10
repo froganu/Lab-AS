@@ -1,6 +1,23 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/forum");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const handleAuth0Login = () => {
+    loginWithRedirect({
+      appState: { returnTo: "/forum" }
+    });
+  };
+
   const styles = {
     container: {
       minHeight: '100vh',
@@ -95,7 +112,8 @@ export default function Home() {
       letterSpacing: 0.5,
       textDecoration: 'none',
       display: 'block',
-      textAlign: 'center'
+      textAlign: 'center',
+      width: '100%'
     },
     primaryButton: {
       backgroundColor: '#FF4500',
@@ -105,6 +123,17 @@ export default function Home() {
       backgroundColor: 'transparent',
       color: '#0079D3',
       border: '2px solid #0079D3'
+    },
+    auth0Button: {
+      backgroundColor: '#EB5424',
+      color: '#ffffff'
+    },
+    divider: {
+      textAlign: 'center',
+      margin: '20px 0',
+      color: '#7c7c7c',
+      fontSize: 14,
+      fontWeight: 500
     },
     features: {
       marginTop: 32,
@@ -159,13 +188,13 @@ export default function Home() {
             <div style={styles.logo}>r/</div>
             <h1 style={styles.brandName}>MyForum</h1>
           </div>
-          
+
           <h2 style={styles.tagline}>
             Your Community Awaits
           </h2>
-          
+
           <p style={styles.description}>
-            Join thousands of users sharing ideas, asking questions, and building connections. 
+            Join thousands of users sharing ideas, asking questions, and building connections.
             Dive into discussions that matter to you.
           </p>
         </div>
@@ -173,10 +202,22 @@ export default function Home() {
         {/* Auth Card */}
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>Get Started</h3>
-          
+
           <div style={styles.buttonGroup}>
+            {/* Botón Auth0 */}
+            <button
+              onClick={handleAuth0Login}
+              style={{ ...styles.button, ...styles.auth0Button }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#D14820'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#EB5424'}
+            >
+              Continue with Auth0
+            </button>
+
+            <div style={styles.divider}>OR</div>
+
             <Link to="/register" style={{ textDecoration: 'none' }}>
-              <button 
+              <button
                 style={{ ...styles.button, ...styles.primaryButton }}
                 onMouseOver={(e) => e.target.style.backgroundColor = '#FF5722'}
                 onMouseOut={(e) => e.target.style.backgroundColor = '#FF4500'}
@@ -184,9 +225,9 @@ export default function Home() {
                 Sign Up
               </button>
             </Link>
-            
+
             <Link to="/login" style={{ textDecoration: 'none' }}>
-              <button 
+              <button
                 style={{ ...styles.button, ...styles.secondaryButton }}
                 onMouseOver={(e) => {
                   e.target.style.backgroundColor = '#0079D3';

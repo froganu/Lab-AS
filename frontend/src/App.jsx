@@ -1,22 +1,41 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect } from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Forum from "./pages/Forum";
-import Post from "./pages/Post"
+import Post from "./pages/Post";
 import CreatePost from "./pages/CreatePost";
+
+function AppRoutes() {
+  const { isLoading, isAuthenticated } = useAuth0();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirige a /forum después del callback de Auth0
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('code') && params.has('state') && !isLoading && isAuthenticated) {
+      navigate("/forum");
+    }
+  }, [isLoading, isAuthenticated, navigate]);
+
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forum" element={<Forum />} />
+      <Route path="/post/:postId" element={<Post />} />
+      <Route path="/create-post/" element={<CreatePost />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />           {/* Pantalla inicial */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forum" element={<Forum />} />    {/* Forum accessible després de login */}
-        <Route path="/post/:postId" element={<Post />} />
-        <Route path="/create-post/" element={<CreatePost />} />
-      </Routes>
+      <AppRoutes />
     </Router>
   );
 }

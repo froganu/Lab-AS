@@ -31,17 +31,17 @@ CREATE TABLE IF NOT EXISTS comments (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Renombrar tablas a nombres ofuscados
+-- Obfuscating the tables' names
 RENAME TABLE users TO t_001;
 RENAME TABLE posts TO t_002;
 RENAME TABLE comments TO t_003;
 
--- Encriptar las tablas
+-- Encrypting the tables
 ALTER TABLE t_001 ENCRYPTION='Y';
 ALTER TABLE t_002 ENCRYPTION='Y';
 ALTER TABLE t_003 ENCRYPTION='Y';
 
--- Crear vistas actualizables (no requieren triggers en MySQL)
+-- Creating views to allow the app to use real table names
 CREATE VIEW users AS SELECT * FROM t_001;
 CREATE VIEW posts AS SELECT * FROM t_002;
 CREATE VIEW comments AS SELECT * FROM t_003;

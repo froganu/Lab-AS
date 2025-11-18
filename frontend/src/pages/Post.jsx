@@ -51,7 +51,7 @@ export default function Post() {
       const newCommentObj = {
         id: data.commentId,
         user_id: 1,
-        username: post.username, // TODO: Use actual logged-in username
+        username: localStorage.getItem("username") ?? "anonymous",
         content: newComment,
         created_at: new Date().toISOString()
       };
@@ -156,7 +156,24 @@ export default function Post() {
       </Link>
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 16, paddingTop: 48 }}>
-        <p style={{ color: '#6b7280' }}>{post.username ?? 'anonymous'}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          {localStorage.getItem("avatar") && (
+            <img
+              src={localStorage.getItem("avatar")}
+              alt="Avatar"
+              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }}
+            />
+          )}
+          <div>
+            <Link to="/look-profile" style={{ fontWeight: 600, color: "#111827", textDecoration: "none" }}>
+              {localStorage.getItem("username") ?? "anonymous"}
+            </Link>
+            <div style={{ fontSize: 12, color: "#6b7280" }}>
+              {localStorage.getItem("bio") ?? ""}
+            </div>
+          </div>
+        </div>
+
         <h1>{post.title}</h1>
         
         {post.image_url && <img src={post.image_url} alt={post.title} style={{ width: '100%', borderRadius: 6 }} />}
@@ -205,7 +222,7 @@ export default function Post() {
             comments.map(c => (
               <li key={c.id} style={styles.commentItem}>
                 <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
-                  {c.username ?? 'anonymous'}
+                  {localStorage.getItem("username") ?? "anonymous"}
                 </p>
                 <p style={{ margin: '4px 0 0 0' }}>{c.content}</p>
               </li>

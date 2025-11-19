@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS posts (
   user_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT,
-  image_url VARCHAR(255),
+  image_url LONGTEXT,
   tags VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -40,6 +40,9 @@ RENAME TABLE comments TO t_003;
 ALTER TABLE t_001 ENCRYPTION='Y';
 ALTER TABLE t_002 ENCRYPTION='Y';
 ALTER TABLE t_003 ENCRYPTION='Y';
+
+-- Modify image_url column to LONGTEXT (for Base64 images)
+ALTER TABLE t_002 MODIFY COLUMN image_url LONGTEXT;
 
 -- Creating views to allow the app to use real table names
 CREATE VIEW users AS SELECT * FROM t_001;

@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
     // Verificar si el correo ya existe
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
@@ -14,10 +14,10 @@ export const registerUser = async (req, res) => {
     // Cifrar contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insertar usuario
+    // Insert - let database handle default if role not provided
     const [result] = await pool.query(
-      'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
-      [username, email, hashedPassword]
+      'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+      [username, email, hashedPassword, role || 'user']
     );
 
     res.status(201).json({ message: 'Usuario registrado con éxito', userId: result.insertId });

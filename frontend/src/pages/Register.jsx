@@ -15,7 +15,7 @@ export default function Register() {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, email, password, role:'admin' }),
       });
       const data = await res.json();
       if (res.ok) {

@@ -91,18 +91,45 @@ export const getPostWithComments = async (req, res) => {
   res.json(post);
 };
 
-// Create a post
+// post.controller.js
+import sharp from 'sharp';
+
 export const createPost = async (req, res) => {
   try {
-    const { user_id, title, description, image_url, tags } = req.body;
+    let { user_id, title, description, image_url, tags } = req.body;
+    
     if (!user_id || !image_url) {
-      return res.status(400).json({ message: 'Falten camps obligatoris: user_id o image_url' });
+      return res.status(400).json({ 
+        message: 'Falten camps obligatoris: user_id o image_url' 
+      });
     }
+
+    // Si viene en Base64, comprime automáticamente
+    if (image_url.startsWith('data:image')) {
+      try {
+        const base64Data = image_url.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Comprime y reduce tamaño
+        const compressedBuffer = await sharp(buffer)
+          .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 75 })  // Reduce de 80 a 75 para más compresión
+          .toBuffer();
+        
+        // Reconvierte a Base64
+        image_url = 'data:image/jpeg;base64,' + compressedBuffer.toString('base64');
+      } catch (err) {
+        console.error('Compression error:', err);
+        // Si falla, intenta igualmente (puede faltar sharp)
+      }
+    }
+    
     const [result] = await pool.query(
       `INSERT INTO posts (user_id, title, description, image_url, tags)
        VALUES (?, ?, ?, ?, ?)`,
-      [user_id, title || null , description || null, image_url, tags || null]
+      [user_id, title || null, description || null, image_url, tags || null]
     );
+    
     res.status(201).json({ 
       message: 'Post creat amb èxit', 
       postId: result.insertId 
@@ -112,4 +139,6 @@ export const createPost = async (req, res) => {
     res.status(500).json({ message: 'Error al crear el post' });
   }
 };
+
+
 

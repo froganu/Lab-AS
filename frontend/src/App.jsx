@@ -7,6 +7,9 @@ import Register from "./pages/Register";
 import Forum from "./pages/Forum";
 import Post from "./pages/Post";
 import CreatePost from "./pages/CreatePost";
+import Profile from "./pages/Profile";
+import LookProfile from "./pages/LookProfile";
+
 
 function AppRoutes() {
   const { isLoading, isAuthenticated } = useAuth0();
@@ -28,6 +31,10 @@ function AppRoutes() {
       <Route path="/forum" element={<Forum />} />
       <Route path="/post/:postId" element={<Post />} />
       <Route path="/create-post/" element={<CreatePost />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/look-profile" element={<LookProfile />} />
+
+
     </Routes>
   );
 }

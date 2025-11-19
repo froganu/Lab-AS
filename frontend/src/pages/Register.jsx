@@ -11,6 +11,20 @@ export default function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    const form = e.target;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    
+    // Validació addicional de l'email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      setSuccess(false);
+      setMessage("Introdueix una adreça de correu vàlida");
+      return;
+    }
+    
     try {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/register`, {
         method: "POST",
@@ -264,12 +278,6 @@ export default function Register() {
             {message}
           </div>
         )}
-
-        {/*<p style={styles.terms}>
-          By continuing, you agree to our{' '}
-          <a href="/terms" style={styles.link}>User Agreement</a> and{' '}
-          <a href="/privacy" style={styles.link}>Privacy Policy</a>
-        </p>*/}
 
         <div style={styles.divider}>
           <div style={styles.dividerLine} />

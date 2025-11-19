@@ -104,7 +104,13 @@ export default function Forum() {
           <input type="search" placeholder="Search" aria-label="Search" style={styles.searchInput} />
         </form>
         <nav style={styles.actions}>
-          <button type="button" style={styles.btn}>Profile</button>
+          <button
+          type="button"
+          style={styles.btn}
+          onClick={() => navigate("/profile")}
+          >
+            Profile
+          </button>
           <button 
             type="button" 
             style={{ ...styles.btn, ...styles.primary }}
@@ -130,9 +136,26 @@ export default function Forum() {
               >
                 {/* header row with username on the left */}
                 <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <span style={{ fontSize: 16, color: '#3b3a3aff' }}>
-                    {p.username ?? 'anonymous'} · {formatRelativeTime(p.created_at)}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {localStorage.getItem('avatar') && (
+                      <img
+                        src={localStorage.getItem('avatar')}
+                        alt="Avatar"
+                        style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    )}
+                    <div>
+                      <a 
+                        href="/look-profile" 
+                        style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}
+                      >
+                        {localStorage.getItem("username") ?? "anonymous"}
+                      </a>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>
+                        {localStorage.getItem('bio') ?? ''}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <p style={styles.title}>{p.title}</p>

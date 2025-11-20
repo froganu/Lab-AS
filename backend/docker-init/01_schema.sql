@@ -1,7 +1,16 @@
--- docker-init/01_schema.sql
 USE forum_db;
 
-CREATE TABLE IF NOT EXISTS users (
+-- BORRAR TABLAS SI EXISTEN (primero views, luego tablas)
+DROP VIEW IF EXISTS users;
+DROP VIEW IF EXISTS posts;
+DROP VIEW IF EXISTS comments;
+
+DROP TABLE IF EXISTS t_003;
+DROP TABLE IF EXISTS t_002;
+DROP TABLE IF EXISTS t_001;
+
+-- Crear tablas originales con nombres reales
+CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(100) NOT NULL,
   email VARCHAR(150) UNIQUE NOT NULL,
@@ -10,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS posts (
+CREATE TABLE posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
@@ -21,7 +30,7 @@ CREATE TABLE IF NOT EXISTS posts (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
   user_id INT NOT NULL,
@@ -31,20 +40,18 @@ CREATE TABLE IF NOT EXISTS comments (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Obfuscating the tables' names
+-- Renombrar (obfuscación)
 RENAME TABLE users TO t_001;
 RENAME TABLE posts TO t_002;
 RENAME TABLE comments TO t_003;
 
--- Encrypting the tables
+-- Cifrar
 ALTER TABLE t_001 ENCRYPTION='Y';
 ALTER TABLE t_002 ENCRYPTION='Y';
 ALTER TABLE t_003 ENCRYPTION='Y';
 
--- Modify image_url column to LONGTEXT (for Base64 images)
-ALTER TABLE t_002 MODIFY COLUMN image_url LONGTEXT;
-
--- Creating views to allow the app to use real table names
+-- Crear VIEWS con nombres reales
 CREATE VIEW users AS SELECT * FROM t_001;
 CREATE VIEW posts AS SELECT * FROM t_002;
 CREATE VIEW comments AS SELECT * FROM t_003;
+

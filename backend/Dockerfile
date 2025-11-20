@@ -7,8 +7,7 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 4000
+EXPOSE 4430
 
-# Modo desarrollo con nodemon
-CMD ["npm","run","dev"]
+CMD ["npm", "run", "dev"]
 

@@ -26,16 +26,17 @@ services:
     container_name: forum-backend
     environment:
       NODE_ENV: development
-      PORT: 4000
+      PORT: 4430
       DB_HOST: db
       DB_USER: forum_user
       DB_PASS: 1234
       DB_NAME: forum_db
     ports:
-      - "4000:4000"
+      - "4430:4430"
     volumes:
-      - .:/app
-      - /app/node_modules
+       - ./src:/app/src
+       - ./ssl:/app/ssl
+       - /app/node_modules      
     depends_on:
       db:
         condition: service_healthy

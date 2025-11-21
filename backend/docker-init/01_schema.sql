@@ -1,16 +1,21 @@
 -- docker-init/01_schema.sql
 USE forum_db;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(100) NOT NULL,
-  email VARCHAR(150) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role ENUM('user','admin') DEFAULT 'user',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  email VARCHAR(150) NOT NULL,
+  password VARCHAR(255),
+  role ENUM('user','admin') NOT NULL DEFAULT 'user',
+  auth_provider ENUM('manual', 'auth0') NOT NULL DEFAULT 'manual',
+  provider_id VARCHAR(50) DEFAULT NULL,
+  auth0_user_id VARCHAR(150) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(email, auth_provider)
 );
 
-CREATE TABLE IF NOT EXISTS posts (
+
+CREATE TABLE posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
@@ -21,7 +26,7 @@ CREATE TABLE IF NOT EXISTS posts (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
   user_id INT NOT NULL,

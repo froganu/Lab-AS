@@ -115,5 +115,55 @@ export const deleteComment = async (req, res) => {
   }
 };
 
+export const editComment = async (req, res) => {
+  try {
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token missing' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token malformed' });
+    }
+
+    // Verificar token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Verificar que el usuario es admin
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied, admin only' });
+    }
+    
+    const { commentId } = req.params; // id del comment a editar
+    const { content } = req.body; // nuevo título
+
+    if (!commentId || !content) {
+      return res.status(400).json({
+        message: 'Falten camps obligatoris: commentId o content'
+      });
+    }
+
+    const [result] = await pool.query(
+      'UPDATE comments SET content = ? WHERE id = ?',
+      [content, commentId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'No s\'ha trobat el comment' });
+    }
+
+    res.status(200).json({
+      message: 'Content actualitzat amb èxit',
+      commentId: commentId
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualitzar el títol' });
+  }
+};
 
 

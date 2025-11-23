@@ -237,5 +237,55 @@ export const deletePost = async (req, res) => {
   }
 };
 
+export const editPost = async (req, res) => {
+  try {
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token missing' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token malformed' });
+    }
+
+    // Verificar token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Verificar que el usuario es admin
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied, admin only' });
+    }
+
+    const { postId } = req.params; // id del post a editar
+    const { title } = req.body; // nuevo título
+
+    if (!postId || !title) {
+      return res.status(400).json({
+        message: 'Falten camps obligatoris: id o title'
+      });
+    }
+
+    const [result] = await pool.query(
+      'UPDATE posts SET title = ? WHERE id = ?',
+      [title, postId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'No s\'ha trobat el post' });
+    }
+
+    res.status(200).json({
+      message: 'Títol actualitzat amb èxit',
+      postId: postId
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualitzar el títol' });
+  }
+};
 
 

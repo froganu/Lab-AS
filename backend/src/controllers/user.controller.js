@@ -1,4 +1,5 @@
 import { pool } from '../config/db.js';
+import jwt from 'jsonwebtoken';
 
 // Get all users
 export const getAllUsers = async (req, res) => {
@@ -29,3 +30,27 @@ export const getUserByName = async (req, res) => {
   }
 };
 
+export const getUsernameByToken = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Token missing' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
+  if (!token) {
+    return res.status(401).json({ message: 'Token malformed' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || !decoded.username) {
+      return res.status(401).json({ message: 'Invalid token or username missing' });
+    }
+
+    return res.json({ username: decoded.username });
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};

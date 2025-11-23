@@ -31,6 +31,7 @@ services:
       DB_USER: forum_user
       DB_PASS: 1234
       DB_NAME: forum_db
+      JWT_SECRET: una_clau_super_secreta
     ports:
       - "4000:4000"
     volumes:

@@ -1,8 +1,25 @@
 import { pool } from '../config/db.js';
+import jwt from 'jsonwebtoken';
 
 // GET /api/posts/with-comments  (or ?withComments=1)
 export const getAllPosts = async (req, res) => {
   try {
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token missing' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token malformed' });
+    }
+
+    // Verificar token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
     const { limit = 20, offset = 0 } = req.query;
 
     const sql = `
@@ -51,6 +68,27 @@ export const getAllPosts = async (req, res) => {
 
 // Backend: GET /api/posts/:postId/full
 export const getPostWithComments = async (req, res) => {
+
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token missing' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token malformed' });
+    }
+
+    // Verificar token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+  }
+  catch (err) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
   const { postId } = req.params;
   const sql = `
     SELECT 
@@ -96,9 +134,25 @@ import sharp from 'sharp';
 
 export const createPost = async (req, res) => {
   try {
-    let { user_id, title, description, image_url, tags } = req.body;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token missing' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token malformed' });
+    }
+
+    // Verificar token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    let { title, description, image_url, tags } = req.body;
     
-    if (!user_id || !image_url) {
+    if (!image_url) {
       return res.status(400).json({ 
         message: 'Falten camps obligatoris: user_id o image_url' 
       });
@@ -127,7 +181,7 @@ export const createPost = async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO posts (user_id, title, description, image_url, tags)
        VALUES (?, ?, ?, ?, ?)`,
-      [user_id, title || null, description || null, image_url, tags || null]
+      [decoded.id, title || null, description || null, image_url, tags || null]
     );
     
     res.status(201).json({ 
@@ -137,6 +191,49 @@ export const createPost = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al crear el post' });
+  }
+};
+
+export const deletePost = async (req, res) => {
+  try {
+    // Obtener token del header Authorization
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token missing' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token malformed' });
+    }
+
+    // Verificar token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Verificar que el usuario es admin
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied, admin only' });
+    }
+
+    // Obtener id del post a eliminar de params
+    const postId = req.params.postId;
+    if (!postId) {
+      return res.status(400).json({ message: 'Post ID required' });
+    }
+
+    // Ejecutar consulta para borrar el post
+    const [result] = await pool.query('DELETE FROM posts WHERE id = ?', [postId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('ERROR deleting post:', error);
+    res.status(500).json({ message: 'Server error deleting post' });
   }
 };
 

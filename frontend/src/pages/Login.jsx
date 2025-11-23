@@ -18,6 +18,10 @@ export default function Login() {
       });
       const data = await res.json();
       if (res.ok) {
+        // Guardar el token JWT en localStorage
+        if (data.token) {
+          localStorage.setItem("jwtToken", data.token);
+        }
         setSuccess(true);
         setMessage("Login correcte! Redirigint a Forum...");
         setTimeout(() => navigate("/forum"), 1000);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 
+
 const formatRelativeTime = (dateString) => {
   const now = new Date();
   const created = new Date(dateString);
@@ -30,14 +31,96 @@ export default function Forum() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [hoveredPost, setHoveredPost] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [username, setUsername] = useState("anonymous");
+
+  const handleDelete = async (postId) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this post?');
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem('jwtToken');
+    if (!token) return alert('You must be logged in');
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${postId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      setPosts(posts.filter(p => p.id !== postId));
+    } else {
+      alert('Failed to delete post');
+    }
+  };
 
   useEffect(() => {
+    const token = localStorage.getItem('jwtToken');
     const url = `${process.env.REACT_APP_API_URL}/posts/`;
 
-    fetch(url)
+    fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then(data => setPosts(data));
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+      console.log('No token found');
+      setIsAdmin(false);
+      return;
+    }
+
+    fetch(`${process.env.REACT_APP_API_URL}/auth/admin`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Response not ok');
+        return res.json();
+      })
+      .then(data => {
+        console.log('isAdmin response:', data);
+        setIsAdmin(!!data.isAdmin);
+      })
+      .catch(error => {
+        console.error('Error fetching isAdmin:', error);
+        setIsAdmin(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      setUsername("anonymous");
+      return;
+    }
+
+    fetch(`${process.env.REACT_APP_API_URL}/token/username`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch username");
+        return res.json();
+      })
+      .then(data => {
+        setUsername(data.username || "anonymous");
+      })
+      .catch(() => {
+        setUsername("anonymous");
+      });
+  }, []);
+
+
 
   const styles = {
     topbar: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid #e5e7eb', backgroundColor: '#ffffff', position: 'sticky', top: 0 },
@@ -149,13 +232,46 @@ export default function Forum() {
                         href="/look-profile" 
                         style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}
                       >
-                        {localStorage.getItem("username") ?? "anonymous"}
+                        {p.username ?? "anonymous"}
                       </a>
                       <div style={{ fontSize: 12, color: '#6b7280' }}>
                         {localStorage.getItem('bio') ?? ''}
                       </div>
                     </div>
                   </div>
+                  {isAdmin && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation(); // prevent li onClick
+                      handleDelete(p.id);
+                    }}
+                    title="Delete post"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      marginLeft: 8,
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="none"
+                      stroke="red"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="feather feather-trash-2"
+                      viewBox="0 0 24 24"
+                    >
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-2 14H7L5 6" />
+                      <path d="M10 11v6M14 11v6" />
+                      <path d="M9 6V4h6v2" />
+                    </svg>
+                  </button>
+                )}
                 </div>
 
                 <p style={styles.title}>{p.title}</p>

@@ -27,26 +27,83 @@ export const registerUser = async (req, res) => {
   }
 };
 
+import jwt from "jsonwebtoken";
+
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    // Buscar l'usuari
+    const [rows] = await pool.query(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+
     if (rows.length === 0) {
-      return res.status(401).json({ message: 'Usuario no encontrado' });
+      return res.status(401).json({ message: 'Usuari no trobat' });
     }
 
     const user = rows[0];
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(401).json({ message: 'Credencials Incorrectes' });
+
+    // Validar contrasenya amb bcrypt
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Contrasenya incorrecta' });
     }
 
-    // Por ahora, no generamos JWT ni Auth0, solo devolvemos confirmación.
-    res.json({ message: 'Login exitoso', user: { id: user.id, username: user.username, role: user.role } });
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET no definit');
+      return res.status(500).json({ message: 'Clau JWT no definida' });
+    }
+
+    // Generar JWT
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Retornar resposta
+    res.json({
+      message: 'Login exitoso',
+      user: { id: user.id, username: user.username, role: user.role },
+      token,
+    });
   } catch (error) {
-    console.error(error);
+    console.error('ERROR LOGIN:', error);
     res.status(500).json({ message: 'Error a l\'iniciar sessió' });
+  }
+};
+
+export const isAdmin = (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token required' });
+    }
+
+    // Format: "Bearer <token>"
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token missing' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET no definit');
+      return res.status(500).json({ message: 'Clau JWT no definida' });
+    }
+
+    // Verifies and decodes token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const isAdmin = (decoded.role === 'admin');
+    res.json({ isAdmin });
+  } catch (error) {
+    console.error('ERROR isAdmin:', error);
+    res.status(401).json({ message: 'Token invàlid o error' });
   }
 };
 

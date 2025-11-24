@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function CreatePost() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -15,6 +15,11 @@ export default function CreatePost() {
   const [imagePreview, setImagePreview] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+      const token = localStorage.getItem("jwtToken");
+      if (!token) navigate("/login");
+    }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

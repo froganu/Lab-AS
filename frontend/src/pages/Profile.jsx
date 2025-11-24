@@ -9,6 +9,11 @@ export default function Profile() {
   const [avatar, setAvatar] = useState("");
   const [createdAt, setCreatedAt] = useState("");
 
+  useEffect(() => {
+      const token = localStorage.getItem("jwtToken");
+      if (!token) navigate("/login");
+    }, []);
+    
   // Carregar dades
   useEffect(() => {
     const fetchProfile = async () => {

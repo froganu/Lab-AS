@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Post() {
+  const navigate = useNavigate();
   const { postId } = useParams();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -15,6 +17,11 @@ export default function Post() {
   const [editedCommentContent, setEditedCommentContent] = useState("");
   const [dropdownOpenId, setDropdownOpenId] = useState(null);
   const dropdownRefs = useRef({}); // refs para cada dropdown de comentario
+
+  useEffect(() => {
+      const token = localStorage.getItem("jwtToken");
+      if (!token) navigate("/login");
+    }, []);
 
   // Cierra menús desplegables si clicas fuera
   useEffect(() => {

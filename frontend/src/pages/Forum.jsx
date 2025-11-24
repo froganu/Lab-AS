@@ -49,6 +49,7 @@ export default function Forum() {
   // Fetch posts
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
+    if (!token) navigate("/login");
     const url = `${process.env.REACT_APP_API_URL}/posts/`;
 
     fetch(url, {

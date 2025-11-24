@@ -13,12 +13,16 @@ DROP TABLE IF EXISTS t_001;
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(100) NOT NULL,
-  email VARCHAR(150) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role ENUM('user','admin') DEFAULT 'user',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  email VARCHAR(150) NOT NULL,
+  password VARCHAR(255),
+  role ENUM('user','admin') NOT NULL DEFAULT 'user',
+  auth_provider ENUM('manual', 'auth0') NOT NULL DEFAULT 'manual',
+  provider_id VARCHAR(50) DEFAULT NULL,
+  auth0_user_id VARCHAR(150) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   bio TEXT DEFAULT NULL,       
-  avatar LONGTEXT DEFAULT NULL 
+  avatar LONGTEXT DEFAULT NULL, 
+  UNIQUE(email, auth_provider)
 );
 
 CREATE TABLE posts (

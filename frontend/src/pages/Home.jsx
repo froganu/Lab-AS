@@ -3,14 +3,52 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect } from "react";
 
 export default function Home() {
-  const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0();
+  const {
+    loginWithRedirect,
+    isAuthenticated,
+    isLoading,
+    getAccessTokenSilently
+  } = useAuth0();
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate("/forum");
-    }
-  }, [isAuthenticated, isLoading, navigate]);
+    if (isLoading) return;
+    if (!isAuthenticated) return;
+
+    const handleOAuthLogin = async () => {
+      try {
+        const auth0Token = await getAccessTokenSilently();
+
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL}/auth/oauth-login`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accessToken: auth0Token })
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error("OAuth login backend error:", data);
+          return;
+        }
+
+        if (res.ok) {
+          localStorage.setItem("jwtToken", auth0Token);
+
+          navigate("/forum");
+        }
+
+      } catch (err) {
+        console.error("OAuth login failed:", err);
+      }
+    };
+
+    handleOAuthLogin();
+  }, [isAuthenticated, isLoading, navigate, getAccessTokenSilently]);
 
   const handleAuth0Login = () => {
     loginWithRedirect({

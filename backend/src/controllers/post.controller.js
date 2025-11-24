@@ -37,12 +37,15 @@ export const getAllPosts = async (req, res) => {
         p.tags,
         p.created_at,
         pu.username AS post_username,
+        pu.bio AS post_bio,
+        pu.avatar AS post_avatar,
         COALESCE(cc.commentCount, 0) AS commentCount
       FROM posts p
       LEFT JOIN users pu ON pu.id = p.user_id
       LEFT JOIN comment_counts cc ON cc.post_id = p.id
       ORDER BY p.created_at DESC, p.id DESC
       LIMIT ? OFFSET ?;
+
     `;
 
     const [rows] = await pool.query(sql, [Number(limit), Number(offset)]);
@@ -50,7 +53,9 @@ export const getAllPosts = async (req, res) => {
     const result = rows.map(r => ({
       id: r.id,
       user_id: r.user_id,
-      username: r.post_username,               // author username
+      username: r.post_username,    // author username
+      bio: r.post_bio,              // author bio
+      avatar: r.post_avatar,        // author avatar
       title: r.title,
       description: r.description,
       image_url: r.image_url,
@@ -58,6 +63,7 @@ export const getAllPosts = async (req, res) => {
       created_at: r.created_at,
       commentCount: r.commentCount,
     }));
+
 
     res.json(result);
   } catch (error) {
@@ -134,7 +140,6 @@ import sharp from 'sharp';
 
 export const createPost = async (req, res) => {
   try {
-
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       return res.status(401).json({ message: 'Token missing' });
@@ -151,48 +156,53 @@ export const createPost = async (req, res) => {
     }
 
     let { title, description, image_url, tags } = req.body;
-    
+
     if (!image_url) {
       return res.status(400).json({ 
-        message: 'Falten camps obligatoris: user_id o image_url' 
+        message: 'Falten camps obligatoris: image_url' 
       });
     }
 
-    // Si viene en Base64, comprime automáticamente
+    // Si l'imatge ve en Base64, comprimeix
     if (image_url.startsWith('data:image')) {
       try {
         const base64Data = image_url.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
-        
-        // Comprime y reduce tamaño
+
         const compressedBuffer = await sharp(buffer)
           .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-          .jpeg({ quality: 75 })  // Reduce de 80 a 75 para más compresión
+          .jpeg({ quality: 75 })
           .toBuffer();
-        
-        // Reconvierte a Base64
+
         image_url = 'data:image/jpeg;base64,' + compressedBuffer.toString('base64');
       } catch (err) {
         console.error('Compression error:', err);
-        // Si falla, intenta igualmente (puede faltar sharp)
       }
     }
-    
+
+    // INSERT amb user_id del token
     const [result] = await pool.query(
       `INSERT INTO posts (user_id, title, description, image_url, tags)
        VALUES (?, ?, ?, ?, ?)`,
       [decoded.id, title || null, description || null, image_url, tags || null]
     );
-    
+
     res.status(201).json({ 
       message: 'Post creat amb èxit', 
       postId: result.insertId 
     });
   } catch (error) {
     console.error(error);
+
+    // Error específic per clau forana
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({ message: 'L’usuari no existeix a la base de dades' });
+    }
+
     res.status(500).json({ message: 'Error al crear el post' });
   }
 };
+
 
 export const deletePost = async (req, res) => {
   try {

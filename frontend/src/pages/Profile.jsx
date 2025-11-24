@@ -11,42 +11,74 @@ export default function Profile() {
 
   // Carregar dades
   useEffect(() => {
-    const savedName = localStorage.getItem("username");
-    const savedBio = localStorage.getItem("bio");
-    const savedAvatar = localStorage.getItem("avatar");
-    const savedDate = localStorage.getItem("createdAt");
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("jwtToken");
+      if (!token) {
+        setName("anonymous");
+        setBio("");
+        setAvatar("");
+        return;
+      }
 
-    if (savedName) setName(savedName);
-    if (savedBio) setBio(savedBio);
-    if (savedAvatar) setAvatar(savedAvatar);
+      try {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile");
 
-    if (savedDate) {
-      setCreatedAt(savedDate);
-    } else {
-      const now = new Date().toLocaleDateString();
-      localStorage.setItem("createdAt", now);
-      setCreatedAt(now);
-    }
+        const data = await res.json();
+        setName(data.username || "anonymous");
+        setBio(data.bio || "");
+        setAvatar(data.avatar || "");
+        setCreatedAt(data.created_at || "");
+      } catch (err) {
+        console.error(err);
+        setName("anonymous");
+        setBio("");
+        setAvatar("");
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   // Guardar
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) return;
 
-    localStorage.setItem("username", name);
-    localStorage.setItem("bio", bio);
-    localStorage.setItem("avatar", avatar);
+    try {
+      const token = localStorage.getItem("jwtToken");
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/users/update-profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ username: name, bio, avatar }),
+      });
 
-    navigate("/forum");
+      if (!res.ok) throw new Error("Failed to update profile");
+      const data = await res.json();
+
+      // Guardar nou token i dades
+      localStorage.setItem("jwtToken", data.token);
+      localStorage.setItem("username", name);
+      localStorage.setItem("bio", bio);
+      localStorage.setItem("avatar", avatar);
+      navigate("/forum");
+    } catch (err) {
+      console.error(err);
+      alert("Error updating profile");
+    }
   };
 
-  // Reset
-  const handleReset = () => {
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem("jwtToken");
     localStorage.removeItem("username");
     localStorage.removeItem("bio");
     localStorage.removeItem("avatar");
-    navigate("/profile");
-    window.location.reload();
+    navigate("/login");
   };
 
   // Pujar imatge de perfil
@@ -65,7 +97,7 @@ export default function Profile() {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "#f3f4f6"
+      backgroundColor: "#f3f4f6",
     },
     card: {
       backgroundColor: "#fff",
@@ -73,7 +105,7 @@ export default function Profile() {
       borderRadius: 12,
       boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
       minWidth: 380,
-      textAlign: "center"
+      textAlign: "center",
     },
     avatar: {
       width: 110,
@@ -81,14 +113,14 @@ export default function Profile() {
       borderRadius: "50%",
       objectFit: "cover",
       marginBottom: 15,
-      border: "3px solid #ff4500"
+      border: "3px solid #ff4500",
     },
     input: {
       width: "100%",
       padding: 10,
       marginTop: 10,
       borderRadius: 6,
-      border: "1px solid #d1d5db"
+      border: "1px solid #d1d5db",
     },
     textarea: {
       width: "100%",
@@ -97,7 +129,7 @@ export default function Profile() {
       resize: "none",
       marginTop: 10,
       borderRadius: 6,
-      border: "1px solid #d1d5db"
+      border: "1px solid #d1d5db",
     },
     button: {
       marginTop: 20,
@@ -108,34 +140,56 @@ export default function Profile() {
       border: "none",
       borderRadius: 8,
       cursor: "pointer",
-      fontWeight: 600
+      fontWeight: 600,
     },
-    resetBtn: {
+    logoutBtn: {
       marginTop: 10,
+      width: "100%",
+      padding: "10px 20px",
       backgroundColor: "#ddd",
-      color: "#333"
-    }
+      color: "#333",
+      border: "none",
+      borderRadius: 8,
+      cursor: "pointer",
+      fontWeight: 600,
+    },
   };
 
   return (
     <div style={styles.container}>
+      <button
+        onClick={() => navigate("/forum")}
+        style={{
+          position: "absolute",
+          top: 20,
+          left: 20,
+          background: "transparent",
+          border: "none",
+          fontSize: 18,
+          cursor: "pointer",
+          color: "#ff4500",
+          fontWeight: "bold",
+        }}
+      >
+        ← Forum
+      </button>
+
       <div style={styles.card}>
         <h2>Your Profile</h2>
 
-        {/* Avatar */}
         <img
-          src={avatar || "https://via.placeholder.com/110"}
+          src={avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png"}
           alt="avatar"
           style={styles.avatar}
         />
-        <input 
-          type="file" 
+
+        <input
+          type="file"
           accept="image/*"
           onChange={handleImageUpload}
           style={{ marginTop: 10 }}
         />
 
-        {/* Name */}
         <label style={{ display: "block", marginTop: 20 }}>Name</label>
         <input
           style={styles.input}
@@ -143,7 +197,6 @@ export default function Profile() {
           onChange={(e) => setName(e.target.value)}
         />
 
-        {/* Bio */}
         <label style={{ display: "block", marginTop: 20 }}>Bio</label>
         <textarea
           style={styles.textarea}
@@ -152,18 +205,16 @@ export default function Profile() {
           placeholder="Tell something about you..."
         />
 
-        {/* Created date */}
         <p style={{ marginTop: 20, color: "#6b7280", fontSize: 14 }}>
           Account created: <strong>{createdAt}</strong>
         </p>
 
-        {/* Buttons */}
         <button style={styles.button} onClick={handleSave}>
           Save
         </button>
 
-        <button style={{ ...styles.button, ...styles.resetBtn }} onClick={handleReset}>
-          Reset profile
+        <button style={styles.logoutBtn} onClick={handleLogout}>
+          Logout
         </button>
       </div>
     </div>

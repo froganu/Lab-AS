@@ -59,6 +59,17 @@ export default function Post() {
     }
   };
 
+
+  const getToken = () => {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      alert("You must be logged in");
+      throw new Error("No token");
+    }
+    return token;
+  };
+
+
   const handleEditSave = async (commentId) => {
     if (!editedCommentContent.trim())
       return alert("Comment content cannot be empty");
@@ -309,7 +320,7 @@ export default function Post() {
           )}
           <div>
             <Link
-              to="/look-profile"
+              to={`/look-profile/${post.username}`}
               style={{ fontWeight: 600, color: "#111827", textDecoration: "none" }}
             >
               {post.username ?? "anonymous"}

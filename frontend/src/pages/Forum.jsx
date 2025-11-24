@@ -91,7 +91,7 @@ export default function Forum() {
       setUsername("anonymous");
       return;
     }
-    fetch(`${process.env.REACT_APP_API_URL}/token/username`, {
+    fetch(`${process.env.REACT_APP_API_URL}/users/token/username`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -312,35 +312,33 @@ export default function Forum() {
                     alignItems: "center",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {localStorage.getItem("avatar") && (
-                      <img
-                        src={localStorage.getItem("avatar")}
-                        alt="Avatar"
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    )}
-                    <div>
-                      <a
-                        href="/look-profile"
-                        style={{
-                          fontWeight: 600,
-                          color: "#111827",
-                          textDecoration: "none",
-                        }}
-                      >
-                        {p.username ?? "anonymous"}
-                      </a>
-                      <div style={{ fontSize: 12, color: "#6b7280" }}>
-                        {localStorage.getItem("bio") ?? ""}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {p.avatar && (
+                        <img
+                          src={p.avatar}
+                          alt="Avatar"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      )}
+                      <div>
+                        <a
+                          href={`/look-profile/${p.username}`}
+                          style={{ fontWeight: 600, color: "#111827", textDecoration: "none" }}
+                        >
+                          {p.username ?? "anonymous"}
+                        </a>
+
+                        <div style={{ fontSize: 12, color: "#6b7280" }}>
+                          {p.bio ?? "This user hasn't written a bio yet."}
+                        </div>
                       </div>
                     </div>
-                  </div>
+
 
                   {isAdmin && (
                     <div

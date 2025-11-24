@@ -1,11 +1,32 @@
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export default function LookProfile() {
+  const { username: profileUsername } = useParams();
   const navigate = useNavigate();
 
-  const username = localStorage.getItem("username") ?? "anonymous";
-  const bio = localStorage.getItem("bio") ?? "This user hasn't written a bio yet.";
-  const avatar = localStorage.getItem("avatar") ?? null; // URL o null
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatar, setAvatar] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/users/${profileUsername}`);
+        if (!res.ok) throw new Error("Usuari no trobat");
+        const data = await res.json();
+        setUsername(data.username);
+        setBio(data.bio || "This user hasn't written a bio yet.");
+        setAvatar(data.avatar);
+      } catch (err) {
+        console.error(err);
+        setUsername("anonymous");
+        setBio("This user hasn't written a bio yet.");
+      }
+    };
+
+    if (profileUsername) fetchProfile();
+  }, [profileUsername]);
 
   const styles = {
     container: {
@@ -13,15 +34,17 @@ export default function LookProfile() {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "#f3f4f6"
+      backgroundColor: "#f3f4f6",
+      padding: 16
     },
     card: {
       backgroundColor: "#fff",
       padding: 30,
       borderRadius: 8,
       boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-      minWidth: 320,
-      textAlign: "center"
+      textAlign: "center",
+      maxWidth: 400,
+      width: "100%"
     },
     avatar: {
       width: 100,

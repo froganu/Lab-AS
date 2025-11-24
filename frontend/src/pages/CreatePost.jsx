@@ -6,12 +6,12 @@ export default function CreatePost() {
   const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
-    user_id: 1,
     title: '',
     description: '',
-    image_url: '', // Will store Base64 string
+    image_url: '',
     tags: ''
   });
+
   const [imagePreview, setImagePreview] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,44 +73,54 @@ export default function CreatePost() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
 
-    // Validation
-    if (!formData.image_url) {
-      setError('Please upload an image');
-      return;
-    }
+  // Validation
+  if (!formData.image_url) {
+    setError('Please upload an image');
+    return;
+  }
 
-    if (!formData.title.trim()) {
-      setError('Title is required');
-      return;
-    }
+  if (!formData.title.trim()) {
+    setError('Title is required');
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Error creating post');
-      }
-
-      navigate(`/post/${data.postId}`);
-    } catch (err) {
-      setError(err.message);
+  try {
+    // Agafem el token del localStorage
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+      setError('You must be logged in');
       setLoading(false);
+      return;
     }
-  };
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}` // <-- afegim token aquí
+      },
+      body: JSON.stringify(formData)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Error creating post');
+    }
+
+    navigate(`/post/${data.postId}`);
+  } catch (err) {
+    setError(err.message);
+    setLoading(false);
+  }
+};
+
 
   const styles = {
     container: { maxWidth: 720, margin: '0 auto', padding: 16 },

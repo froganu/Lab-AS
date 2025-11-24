@@ -32,7 +32,7 @@ function AppRoutes() {
       <Route path="/post/:postId" element={<Post />} />
       <Route path="/create-post/" element={<CreatePost />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/look-profile" element={<LookProfile />} />
+      <Route path="/look-profile/:username" element={<LookProfile />} />
 
 
     </Routes>

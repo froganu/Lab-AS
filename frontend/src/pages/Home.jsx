@@ -37,7 +37,7 @@ export default function Home() {
         }
 
         if (res.ok) {
-          localStorage.setItem("accessToken", auth0Token);
+          localStorage.setItem("jwtToken", auth0Token);
 
           navigate("/forum");
         }

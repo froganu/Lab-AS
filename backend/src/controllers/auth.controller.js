@@ -145,9 +145,20 @@ export const authLoginUser = async (req, res) => {
       user = rows[0];
     }
 
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    console.log("Generated JWT for OAuth user:", token);
     res.json({
       message: "Login OAuth exitoso",
-      user: { id: user.id, username: user.username, role: user.role }
+      token: token,
     });
 
   } catch (err) {

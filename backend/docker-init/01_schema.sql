@@ -19,7 +19,7 @@ CREATE TABLE users (
   auth_provider ENUM('manual', 'auth0') NOT NULL DEFAULT 'manual',
   provider_id VARCHAR(50) DEFAULT NULL,
   auth0_user_id VARCHAR(150) DEFAULT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   bio TEXT DEFAULT NULL,       
   avatar LONGTEXT DEFAULT NULL, 
   UNIQUE(email, auth_provider)

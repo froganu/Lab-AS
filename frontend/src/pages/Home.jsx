@@ -254,7 +254,7 @@ export default function Home() {
 
             <div style={styles.divider}>OR</div>
 
-            <Link to="/register" style={{ textDecoration: 'none' }}>
+            {/*<Link to="/register" style={{ textDecoration: 'none' }}>
               <button
                 style={{ ...styles.button, ...styles.primaryButton }}
                 onMouseOver={(e) => e.target.style.backgroundColor = '#FF5722'}
@@ -262,7 +262,7 @@ export default function Home() {
               >
                 Sign Up
               </button>
-            </Link>
+            </Link>*/}
 
             <Link to="/login" style={{ textDecoration: 'none' }}>
               <button

@@ -347,7 +347,7 @@ export default function Forum() {
                               setEditedTitle(p.title);
                             }}
                           >
-                            [translate:Editar]
+                            Editar
                           </button>
                           <button
                             style={{
@@ -365,7 +365,7 @@ export default function Forum() {
                               handleDelete(p.id);
                             }}
                           >
-                            [translate:Eliminar]
+                            Eliminar
                           </button>
                         </div>
                       )}
@@ -394,13 +394,13 @@ export default function Forum() {
                         onClick={() => handleSaveTitle(p.id)}
                         style={{ ...styles.btn, ...styles.primary, padding: "6px 12px" }}
                       >
-                        [translate:Guardar]
+                       Guardar
                       </button>
                       <button
                         onClick={() => setEditingPostId(null)}
                         style={{ ...styles.btn, padding: "6px 12px" }}
                       >
-                        [translate:Cancelar]
+                        Cancelar
                       </button>
                     </div>
                   </div>

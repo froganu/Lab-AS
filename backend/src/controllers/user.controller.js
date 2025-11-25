@@ -17,7 +17,7 @@ export const getUserByName = async (req, res) => {
   try {
     const { username } = req.params; 
     const [rows] = await pool.query(
-      'SELECT id, username, email, role FROM users WHERE username = ?',
+      'SELECT id, username, email, role, bio, avatar FROM users WHERE username = ?',
       [username]
     );
     if (rows.length === 0) {
@@ -29,6 +29,7 @@ export const getUserByName = async (req, res) => {
     res.status(500).json({ message: 'Error al obtenir l’usuari' });
   }
 };
+
 
 export const updateProfile = async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -132,5 +133,34 @@ export const editUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
+export const getUserPosts = async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    // First get the user ID from username
+    const [userRows] = await pool.query(
+      'SELECT id FROM users WHERE username = ?',
+      [username]
+    );
+    
+    if (userRows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const userId = userRows[0].id;
+    
+    // Get all posts by this user
+    const [posts] = await pool.query(
+      'SELECT id, title, description, image_url, tags, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC',
+      [userId]
+    );
+    
+    res.json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching user posts' });
   }
 };

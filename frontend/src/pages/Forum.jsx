@@ -30,6 +30,7 @@ export default function Forum() {
   const [editingPostId, setEditingPostId] = useState(null);
   const [dropdownOpenId, setDropdownOpenId] = useState(null);
   const [editedTitle, setEditedTitle] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // Add this
 
   useEffect(() => {
     const url = `${process.env.REACT_APP_API_URL}/users/data`;
@@ -37,7 +38,7 @@ export default function Forum() {
     fetch(url, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`, // ajusta el método de autenticación según tu lógica
+        Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => res.json())
@@ -48,7 +49,6 @@ export default function Forum() {
       });
   }, []);
 
-  // Fetch posts
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (!token) navigate("/login");
@@ -78,6 +78,42 @@ export default function Forum() {
     };
   }, [dropdownOpenId]);
 
+  // Add this function to handle user search
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    
+    if (!searchQuery.trim()) {
+      alert("Please enter a username to search");
+      return;
+    }
+
+    const token = localStorage.getItem("jwtToken");
+    
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/users/${searchQuery.trim()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        // User exists, navigate to their profile
+        navigate(`/look-profile/${searchQuery.trim()}`);
+        setSearchQuery(""); // Clear search
+      } else if (response.status === 404) {
+        alert(`User "${searchQuery}" not found`);
+      } else {
+        alert("Error searching for user");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error connecting to server");
+    }
+  };
+
   const handleDelete = async (postId) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this post?");
     if (!confirmDelete) return;
@@ -100,10 +136,10 @@ export default function Forum() {
   };
 
   const handleSaveTitle = async (postId) => {
-    if (!editedTitle.trim()) return alert("[translate:Title no puede estar vacío]");
+    if (!editedTitle.trim()) return alert("Title cannot be empty");
 
     const token = localStorage.getItem("jwtToken");
-    if (!token) return alert("[translate:Debes iniciar sesión]");
+    if (!token) return alert("You must be logged in");
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${postId}`, {
@@ -122,10 +158,10 @@ export default function Forum() {
         setEditingPostId(null);
         setDropdownOpenId(null);
       } else {
-        alert("[translate:Error al actualizar título]");
+        alert("Error updating title");
       }
     } catch {
-      alert("[translate:Error al conectar con el servidor]");
+      alert("Error connecting to server");
     }
   };
 
@@ -222,12 +258,15 @@ export default function Forum() {
         <a style={styles.brand} href="/">
           MyForum
         </a>
-        <form style={styles.search} role="search">
+        {/* Updated search form */}
+        <form style={styles.search} role="search" onSubmit={handleSearch}>
           <input
             type="search"
-            placeholder="Search"
+            placeholder="Search users..."
             aria-label="Search"
             style={styles.searchInput}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </form>
         <nav style={styles.actions}>
@@ -301,8 +340,8 @@ export default function Forum() {
                           e.stopPropagation();
                           setDropdownOpenId(dropdownOpenId === p.id ? null : p.id);
                         }}
-                        title="[translate:Opciones]"
-                        aria-label="[translate:Opciones del post]"
+                        title="Options"
+                        aria-label="Post options"
                         style={{
                           background: "none",
                           border: "none",
@@ -313,7 +352,7 @@ export default function Forum() {
                           padding: 0,
                         }}
                       >
-                        &#8942;
+                        ⋮
                       </button>
 
                       {dropdownOpenId === p.id && (
@@ -394,7 +433,7 @@ export default function Forum() {
                         onClick={() => handleSaveTitle(p.id)}
                         style={{ ...styles.btn, ...styles.primary, padding: "6px 12px" }}
                       >
-                       Guardar
+                        Guardar
                       </button>
                       <button
                         onClick={() => setEditingPostId(null)}

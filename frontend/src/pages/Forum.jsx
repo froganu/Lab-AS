@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const formatRelativeTime = (dateString) => {
@@ -26,24 +26,26 @@ export default function Forum() {
 
   const [posts, setPosts] = useState([]);
   const [hoveredPost, setHoveredPost] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [username, setUsername] = useState("anonymous");
+  const [userData, setUserData] = useState(null);
   const [editingPostId, setEditingPostId] = useState(null);
   const [dropdownOpenId, setDropdownOpenId] = useState(null);
   const [editedTitle, setEditedTitle] = useState("");
 
-  const dropdownRef = useRef(null);
-
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpenId(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    const url = `${process.env.REACT_APP_API_URL}/users/data`;
+    const token = localStorage.getItem("jwtToken");
+    fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`, // ajusta el método de autenticación según tu lógica
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => setUserData(data))
+      .catch((err) => {
+        console.error(err);
+        setUserData(null);
+      });
   }, []);
 
   // Fetch posts
@@ -61,54 +63,71 @@ export default function Forum() {
       .then((data) => setPosts(data));
   }, []);
 
-  // Check admin status
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (!token) {
-      setIsAdmin(false);
-      return;
+    function handleClickOutside(event) {
+      if (dropdownOpenId !== null) {
+        const dropdownElement = document.getElementById(`dropdown-${dropdownOpenId}`);
+        if (dropdownElement && !dropdownElement.contains(event.target)) {
+          setDropdownOpenId(null);
+        }
+      }
     }
-    fetch(`${process.env.REACT_APP_API_URL}/auth/admin`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Response not ok");
-        return res.json();
-      })
-      .then((data) => {
-        setIsAdmin(!!data.isAdmin);
-      })
-      .catch(() => {
-        setIsAdmin(false);
-      });
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpenId]);
 
-  // Fetch username
-  useEffect(() => {
+  const handleDelete = async (postId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this post?");
+    if (!confirmDelete) return;
+
     const token = localStorage.getItem("jwtToken");
-    if (!token) {
-      setUsername("anonymous");
-      return;
-    }
-    fetch(`${process.env.REACT_APP_API_URL}/users/token/username`, {
-      method: "GET",
+    if (!token) return alert("You must be logged in");
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${postId}`, {
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch username");
-        return res.json();
-      })
-      .then((data) => {
-        setUsername(data.username || "anonymous");
-      })
-      .catch(() => {
-        setUsername("anonymous");
+    });
+
+    if (response.ok) {
+      setPosts(posts.filter((p) => p.id !== postId));
+    } else {
+      alert("Failed to delete post");
+    }
+  };
+
+  const handleSaveTitle = async (postId) => {
+    if (!editedTitle.trim()) return alert("[translate:Title no puede estar vacío]");
+
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return alert("[translate:Debes iniciar sesión]");
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${postId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: editedTitle }),
       });
-  }, []);
+
+      if (response.ok) {
+        setPosts((prevPosts) =>
+          prevPosts.map((p) => (p.id === postId ? { ...p, title: editedTitle } : p))
+        );
+        setEditingPostId(null);
+        setDropdownOpenId(null);
+      } else {
+        alert("[translate:Error al actualizar título]");
+      }
+    } catch {
+      alert("[translate:Error al conectar con el servidor]");
+    }
+  };
 
   const styles = {
     topbar: {
@@ -197,67 +216,6 @@ export default function Forum() {
     postLink: { textDecoration: "none", color: "inherit", width: "100%" },
   };
 
-  const handleDelete = async (postId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this post?"
-    );
-    if (!confirmDelete) return;
-
-    const token = localStorage.getItem("jwtToken");
-    if (!token) return alert("You must be logged in");
-
-    const response = await fetch(
-      `${process.env.REACT_APP_API_URL}/posts/${postId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.ok) {
-      setPosts(posts.filter((p) => p.id !== postId));
-    } else {
-      alert("Failed to delete post");
-    }
-  };
-
-  const handleSaveTitle = async (postId) => {
-    if (!editedTitle.trim()) return alert("Title no puede estar vacío");
-
-    const token = localStorage.getItem("jwtToken");
-    if (!token) return alert("Debes iniciar sesión");
-
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/posts/${postId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ title: editedTitle }),
-        }
-      );
-
-      if (response.ok) {
-        setPosts((prevPosts) =>
-          prevPosts.map((p) =>
-            p.id === postId ? { ...p, title: editedTitle } : p
-          )
-        );
-        setEditingPostId(null);
-        setDropdownOpenId(null);
-      } else {
-        alert("Error al actualizar título");
-      }
-    } catch {
-      alert("Error al conectar con el servidor");
-    }
-  };
-
   return (
     <>
       <header style={styles.topbar}>
@@ -273,11 +231,7 @@ export default function Forum() {
           />
         </form>
         <nav style={styles.actions}>
-          <button
-            type="button"
-            style={styles.btn}
-            onClick={() => navigate("/profile")}
-          >
+          <button type="button" style={styles.btn} onClick={() => navigate("/profile")}>
             Profile
           </button>
           <button
@@ -313,45 +267,42 @@ export default function Forum() {
                     alignItems: "center",
                   }}
                 >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {p.avatar && (
-                        <img
-                          src={p.avatar}
-                          alt="Avatar"
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "50%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      )}
-                      <div>
-                        <a
-                          href={`/look-profile/${p.username}`}
-                          style={{ fontWeight: 600, color: "#111827", textDecoration: "none" }}
-                        >
-                          {p.username ?? "anonymous"}
-                        </a>
-
-                        <div style={{ fontSize: 12, color: "#6b7280" }}>
-                          {p.bio ?? "This user hasn't written a bio yet."}
-                        </div>
-                      </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {p.avatar && (
+                      <img
+                        src={p.avatar}
+                        alt="Avatar"
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    )}
+                    <div>
+                      <a
+                        href={`/look-profile/${p.username}`}
+                        style={{ fontWeight: 600, color: "#111827", textDecoration: "none" }}
+                      >
+                        {p.username ?? "anonymous"}
+                      </a>
                     </div>
+                  </div>
 
-
-                  {isAdmin && (
+                  {(userData?.role === "admin" || userData?.id === p.user_id) && (
                     <div
+                      id={`dropdown-${p.id}`}
                       style={{ position: "relative" }}
-                      ref={dropdownRef}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
-                        onClick={() =>
-                          setDropdownOpenId(dropdownOpenId === p.id ? null : p.id)
-                        }
-                        title="Opciones"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDropdownOpenId(dropdownOpenId === p.id ? null : p.id);
+                        }}
+                        title="[translate:Opciones]"
+                        aria-label="[translate:Opciones del post]"
                         style={{
                           background: "none",
                           border: "none",
@@ -361,10 +312,10 @@ export default function Forum() {
                           lineHeight: 1,
                           padding: 0,
                         }}
-                        aria-label="Opciones del post"
                       >
                         &#8942;
                       </button>
+
                       {dropdownOpenId === p.id && (
                         <div
                           style={{
@@ -374,10 +325,11 @@ export default function Forum() {
                             backgroundColor: "white",
                             border: "1px solid #d1d5db",
                             borderRadius: 4,
-                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                             zIndex: 10,
                             minWidth: 120,
                           }}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <button
                             style={{
@@ -390,12 +342,12 @@ export default function Forum() {
                               font: "inherit",
                             }}
                             onClick={() => {
-                              setEditingPostId(p.id);
                               setDropdownOpenId(null);
+                              setEditingPostId(p.id);
                               setEditedTitle(p.title);
                             }}
                           >
-                            Editar
+                            [translate:Editar]
                           </button>
                           <button
                             style={{
@@ -413,7 +365,7 @@ export default function Forum() {
                               handleDelete(p.id);
                             }}
                           >
-                            Eliminar
+                            [translate:Eliminar]
                           </button>
                         </div>
                       )}
@@ -437,27 +389,18 @@ export default function Forum() {
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <div
-                      style={{ display: "flex", justifyContent: "center", gap: 8 }}
-                    >
+                    <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
                       <button
                         onClick={() => handleSaveTitle(p.id)}
-                        style={{
-                          ...styles.btn,
-                          ...styles.primary,
-                          padding: "6px 12px",
-                        }}
+                        style={{ ...styles.btn, ...styles.primary, padding: "6px 12px" }}
                       >
-                        Guardar
+                        [translate:Guardar]
                       </button>
                       <button
                         onClick={() => setEditingPostId(null)}
-                        style={{
-                          ...styles.btn,
-                          padding: "6px 12px",
-                        }}
+                        style={{ ...styles.btn, padding: "6px 12px" }}
                       >
-                        Cancelar
+                        [translate:Cancelar]
                       </button>
                     </div>
                   </div>

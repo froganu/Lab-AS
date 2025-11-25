@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -10,34 +10,31 @@ export default function Post() {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userData, setUserData] = useState(null);
 
   // Para edición de comentarios:
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedCommentContent, setEditedCommentContent] = useState("");
   const [dropdownOpenId, setDropdownOpenId] = useState(null);
-  const dropdownRefs = useRef({}); // refs para cada dropdown de comentario
 
   useEffect(() => {
-      const token = localStorage.getItem("jwtToken");
-      if (!token) navigate("/login");
-    }, []);
+    const token = localStorage.getItem("jwtToken");
+    if (!token) navigate("/login");
+  }, [navigate]);
 
   // Cierra menús desplegables si clicas fuera
   useEffect(() => {
     function handleClickOutside(event) {
-      for(const key in dropdownRefs.current) {
-        if (
-          dropdownRefs.current[key] &&
-          !dropdownRefs.current[key].contains(event.target)
-        ) {
+      if (dropdownOpenId !== null) {
+        const dropdownElement = document.getElementById(`dropdown-comment-${dropdownOpenId}`);
+        if (dropdownElement && !dropdownElement.contains(event.target)) {
           setDropdownOpenId(null);
         }
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [dropdownOpenId]);
 
   const handleDelete = async (commentId) => {
     const confirmDelete = window.confirm(
@@ -52,9 +49,7 @@ export default function Post() {
       `${process.env.REACT_APP_API_URL}/comments/${commentId}`,
       {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
 
@@ -66,20 +61,8 @@ export default function Post() {
     }
   };
 
-
-  const getToken = () => {
-    const token = localStorage.getItem("jwtToken");
-    if (!token) {
-      alert("You must be logged in");
-      throw new Error("No token");
-    }
-    return token;
-  };
-
-
   const handleEditSave = async (commentId) => {
-    if (!editedCommentContent.trim())
-      return alert("Comment content cannot be empty");
+    if (!editedCommentContent.trim()) return alert("Comment content cannot be empty");
 
     const token = localStorage.getItem("jwtToken");
     if (!token) return alert("You must be logged in");
@@ -131,25 +114,20 @@ export default function Post() {
   }, [postId]);
 
   useEffect(() => {
+    const url = `${process.env.REACT_APP_API_URL}/users/data`;
     const token = localStorage.getItem("jwtToken");
-    if (!token) {
-      setIsAdmin(false);
-      return;
-    }
-    fetch(`${process.env.REACT_APP_API_URL}/auth/admin`, {
+    fetch(url, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Response not ok");
-        return res.json();
-      })
-      .then((data) => {
-        setIsAdmin(!!data.isAdmin);
-      })
-      .catch(() => {
-        setIsAdmin(false);
+      .then((res) => res.json())
+      .then((data) => setUserData(data))
+      .catch((err) => {
+        console.error(err);
+        setUserData(null);
       });
   }, []);
 
@@ -177,7 +155,7 @@ export default function Post() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            user_id: 1, // TODO: Replace with actual authenticated user ID
+            user_id: userData?.id || 1,
             content: newComment,
           }),
         }
@@ -191,8 +169,8 @@ export default function Post() {
 
       const newCommentObj = {
         id: data.commentId,
-        user_id: 1,
-        username: localStorage.getItem("username") ?? "anonymous",
+        user_id: userData?.id || 1,
+        username: userData?.username ?? "anonymous",
         content: newComment,
         created_at: new Date().toISOString(),
       };
@@ -275,6 +253,7 @@ export default function Post() {
     commentItem: {
       padding: 12,
       borderBottom: "1px solid #e5e7eb",
+      position: "relative",
     },
     dropdownBtn: {
       background: "none",
@@ -388,10 +367,7 @@ export default function Post() {
             </li>
           ) : (
             comments.map((c) => (
-              <li
-                key={c.id}
-                style={{ ...styles.commentItem, position: "relative" }}
-              >
+              <li key={c.id} style={styles.commentItem}>
                 <div
                   style={{
                     display: "flex",
@@ -403,25 +379,23 @@ export default function Post() {
                     {c.username ?? "anonymous"}
                   </p>
 
-                  {isAdmin && (
+                  {(userData?.role === "admin" || userData?.id === c.user_id) && (
                     <div
-                      ref={(el) => (dropdownRefs.current[c.id] = el)}
-                      onClick={(e) => e.stopPropagation()}
+                      id={`dropdown-comment-${c.id}`}
                       style={{ position: "relative" }}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <button
-                        onClick={() =>
-                          setDropdownOpenId(dropdownOpenId === c.id ? null : c.id)
-                        }
+                        onClick={() => setDropdownOpenId(dropdownOpenId === c.id ? null : c.id)}
                         title="Opciones"
-                        style={styles.dropdownBtn}
                         aria-label="Opciones del comentario"
+                        style={styles.dropdownBtn}
                       >
                         &#8942;
                       </button>
 
                       {dropdownOpenId === c.id && (
-                        <div style={styles.dropdownMenu}>
+                        <div style={styles.dropdownMenu} onClick={(e) => e.stopPropagation()}>
                           <button
                             style={{
                               width: "100%",

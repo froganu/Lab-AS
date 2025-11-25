@@ -90,11 +90,6 @@ export const deleteComment = async (req, res) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
 
-    // Verificar que el usuario es admin
-    if (decoded.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied, admin only' });
-    }
-
     // Obtener id del post a eliminar de params
     const commentId = req.params.commentId;
     if (!commentId) {
@@ -131,11 +126,6 @@ export const editComment = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded) {
       return res.status(401).json({ message: 'Invalid token' });
-    }
-
-    // Verificar que el usuario es admin
-    if (decoded.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied, admin only' });
     }
     
     const { commentId } = req.params; // id del comment a editar

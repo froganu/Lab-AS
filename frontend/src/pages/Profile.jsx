@@ -211,7 +211,7 @@ export default function Profile() {
         />
 
         <p style={{ marginTop: 20, color: "#6b7280", fontSize: 14 }}>
-          Account created: <strong>{createdAt}</strong>
+          Account created: <strong>{createdAt.split('T')[0]}</strong>
         </p>
 
         <button style={styles.button} onClick={handleSave}>

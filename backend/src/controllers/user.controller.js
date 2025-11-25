@@ -30,31 +30,6 @@ export const getUserByName = async (req, res) => {
   }
 };
 
-export const getUsernameByToken = async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ message: 'Token missing' });
-  }
-
-  const token = authHeader.split(' ')[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);
-  if (!token) {
-    return res.status(401).json({ message: 'Token malformed' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.username) {
-      return res.status(401).json({ message: 'Invalid token or username missing' });
-    }
-
-    return res.json({ username: decoded.username });
-  } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-};
-
 export const updateProfile = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ message: "Token missing" });
@@ -115,5 +90,47 @@ export const getProfile = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+export const getUserDataByToken = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Token missing' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
+  if (!token) {
+    return res.status(401).json({ message: 'Token malformed' });
+  }
+
+  try {
+    if (!decoded || !decoded.username || !decoded.id || !decoded.role) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    return res.json({ id: decoded.id, username: decoded.username, role: decoded.role });
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
+export const editUser = async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      'UPDATE users SET role = ? WHERE id = ?',
+      ['user', 2]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    res.json({ message: `Role actualizado a 'user' para ` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 };

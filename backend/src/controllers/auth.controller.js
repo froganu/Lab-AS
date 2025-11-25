@@ -78,34 +78,6 @@ export const loginUser = async (req, res) => {
   }
 };
 
-export const isAdmin = (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: 'Token required' });
-    }
-
-    // Format: "Bearer <token>"
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ message: 'Token missing' });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      console.error('JWT_SECRET no definit');
-      return res.status(500).json({ message: 'Clau JWT no definida' });
-    }
-
-    // Verifies and decodes token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const isAdmin = (decoded.role === 'admin');
-    res.json({ isAdmin });
-  } catch (error) {
-    console.error('ERROR isAdmin:', error);
-    res.status(401).json({ message: 'Token invàlid o error' });
-  }
-};
-
 export const authLoginUser = async (req, res) => {
   try {
     const { accessToken } = req.body;
